@@ -22,6 +22,8 @@ class SafeException(Exception):
     def __bool__(self):
         self.handled = True
         return False
+    def __repr__(self):
+        return f"{ansi.red}Unhandled error:{ansi.reset} {self}"
     @property
     def value(self):
         return self
