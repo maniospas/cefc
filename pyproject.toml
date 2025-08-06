@@ -4,7 +4,7 @@
 
 [project]
 name = "cefc"
-version = "0.1.1"
+version = "0.1.2"
 description = "A call-effect-commit schema for safe data management in Python"
 readme = "README.md"
 requires-python = ">=3.8"

@@ -23,6 +23,8 @@ from cefc import service
 
 @service
 def func(a:list, b: int):
+    a.append(4)
+    a[2] = 100
     a[0] = 1
     a[0] /= b
 
@@ -50,6 +52,6 @@ when presented as service arguments. Note that the safety of global state
 is not guaranteed, but globals can be passed as preset arguments too.
 
 - [x] list
-- [ ] dict
+- [x] dict
 - [ ] numpy array or GPU tensor
-- [ ] object
+- [x] object (no magic functions)

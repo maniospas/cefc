@@ -71,8 +71,8 @@ def service(f, name: str|None=None, state: State|None=None):
             for v in kwargs.values(): fromsafe(v)
         else:
             for v in args:
-                if isinstance(v, Safe): v.nesting -= 1
+                if isinstance(v, Safe): v._safe_nesting -= 1
             for v in kwargs.values():
-                if isinstance(v, Safe): v.nesting -= 1
+                if isinstance(v, Safe): v._safe_nesting -= 1
         return fromsafe(result)
     return decorator

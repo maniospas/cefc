@@ -3,6 +3,7 @@ from cefc import service, commit
 @service
 def func(a: list, b: int):
     a[2] = 100
+    a.append(4)
     #commit(a) # (enable to apply all modifications till now)
     a[0] = 1
     a[0] /= b
