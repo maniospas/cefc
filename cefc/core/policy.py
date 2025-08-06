@@ -1,10 +1,13 @@
 class Safe:
-    def __commit__(self):
+    def __init__(self):
+        self.nesting = 0
+    def __commit__(self, force=False):
         raise Exception("Missing a __commit__ implementation for safe class: "+str(self.__class__))
 
 class List(Safe):
     def __init__(self, data):
         assert isinstance(data, list)
+        super().__init__()
         self.__data = data
         self.__pending = dict()
         self.__append = list()
@@ -30,15 +33,20 @@ class List(Safe):
     def extend(self, other):
         self.__append.extend(other)
 
-    def __commit__(self):
+    def __commit__(self, force=False):
+        if not force:
+            self.nesting -= 1
+            if self.nesting: return self
         self.__data.extend(self.__append)
         for k, v in self.__pending.items(): self.__data[k] = v
         self.__pending.clear()
         self.__append.clear()
         return self.__data
 
-
 def tosafe(data, policies = (List,)):
+    if isinstance(data, Safe):
+        data.nesting += 1
+        return data
     for policy in policies:
         try: return policy(data)
         except AssertionError: pass
@@ -48,6 +56,7 @@ def fromsafe(data):
     if hasattr(data, "__commit__"): return data.__commit__()
     return data
 
-def commit(*args):
-    for data in args: assert hasattr(data, "__commit__"), "Tried to apply commit() on non-safe data"
-    return [data.__commit__() for data in args]
+def commit(data):
+    assert hasattr(data, "__commit__"), "Cannot commit data that do not implement __commit__"
+    return data.__commit__(force=True)
+

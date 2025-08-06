@@ -1,7 +1,7 @@
 import inspect
 from functools import wraps
 from cefc.core.state import State
-from cefc.core.policy import tosafe, fromsafe
+from cefc.core.policy import tosafe, fromsafe, Safe
 
 class ansi:
     red = "\033[91m"
@@ -66,5 +66,13 @@ def service(f, name: str|None=None, state: State|None=None):
             result = SafeException(e.description, e.frames+[name if name else funcdesc(f)])
         except Exception as e:
             result = SafeException(str(e), [name if name else funcdesc(f)])
+        if not isinstance(result, SafeException):
+            for v in args: fromsafe(v)
+            for v in kwargs.values(): fromsafe(v)
+        else:
+            for v in args:
+                if isinstance(v, Safe): v.nesting -= 1
+            for v in kwargs.values():
+                if isinstance(v, Safe): v.nesting -= 1
         return fromsafe(result)
     return decorator

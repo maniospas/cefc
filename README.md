@@ -1,6 +1,6 @@
 # CEfC
 
-A *call-effect-commit* schema for safe data management Python.
+A *call-effect-commit* schema for safe data management in Python.
 
 This a metaprogramming framework that enables the safe execution
 of Python code by tracking data modifications and commiting to them
@@ -16,18 +16,19 @@ are cascaded throughout service calls.
 ## :zap: Quickstart
 
 Install *CEfC* per `pip install cefc`. Then create and run the
-following code snippet:
+following code snippet - code hints are not mandatory:
 
 ```python
 from cefc import service
 
 @service
-def func(a: list, b: int):
+def func(a:list, b: int):
     a[0] = 1
     a[0] /= b
 
 @service
-def outer_func(a: list, b:int):
+def outer_func(a:list, b:int):
+    a[1] = 100
     return func(a, b)
 
 a = [1,2,3]
@@ -37,7 +38,7 @@ print(a)
 
 You will see the following output, where `a` is unaffected by would-be
 modifications and there is a final warning about not having handled the
-division-by-zero error at any point.
+division-by-zero error at any point. More on error handling later.
 
 ![Error example](docs/error.png)
 
