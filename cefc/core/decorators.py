@@ -18,12 +18,17 @@ class SafeException(Exception):
         super().__init__(f"{description}\n{ansi.blue}->{ansi.reset} "+f"\n{ansi.blue}->{ansi.reset} ".join(frames))
     def __del__(self):
         if not self.handled:
+            self.handled = True
             print(f"{ansi.red}Unhandled error:{ansi.reset} {self}")
     def __bool__(self):
         self.handled = True
         return False
     def __repr__(self):
+        self.handled = True
         return f"{ansi.red}Unhandled error:{ansi.reset} {self}"
+    def __str__(self):
+        self.handled = True
+        return super().__str__()
     @property
     def value(self):
         return self
@@ -54,6 +59,10 @@ def service(f, name: str|None=None, state: State|None=None):
                 return SafeException(e.description, e.frames+[name if name else funcdesc(f)])
         args = [tosafe(v) for v in args]
         kwargs = {k: tosafe(v) for k, v in kwargs.items()}
+        for v in args:
+            if isinstance(v, Safe): v._safe_nesting += 1
+        for v in kwargs.values():
+            if isinstance(v, Safe): v._safe_nesting += 1
         try:
             if state is not None: result = f(*args, state=state, **kwargs)
             else: result = f(*args, **kwargs)

@@ -118,17 +118,35 @@ class Dict(Safe):
 
 class Object(Safe):
     def __init__(self, obj):
+        assert not callable(obj), "Cannot turn an object with magic methods into a safe one"
         assert not isinstance(obj, Safe), "Cannot wrap an already safe object"
         assert hasattr(obj, "__dict__"), "Object can only wrap objects with __dict__"
         super().__init__()
         self.__obj = obj
         self.__pending = {}
+        #print("creating object"+str(self.__obj))
 
     def __getattr__(self, name):
         if name in self.__pending: return self.__pending[name]
         if not hasattr(self.__obj, name): raise AttributeError(name)
-        self.__pending[name] = tosafe(getattr(self.__obj, name))
-        return self.__pending[name]
+        attr = getattr(self.__obj, name)
+        if callable(attr):
+            from functools import wraps
+            from cefc import service
+            import types
+            if isinstance(attr, types.MethodType):
+                func = attr.__func__
+                bound = types.MethodType(func, self)
+            else: bound = attr
+            @wraps(bound)
+            def wrapper(*args, **kwargs):
+                #print("Calling wrapper of "+str(bound))
+                self._safe_nesting += 1
+                return bound(*args, **kwargs)
+            attr = service(wrapper)
+        else: attr = tosafe(attr)
+        self.__pending[name] = attr
+        return attr
 
     def __setattr__(self, name, value):
         if name.startswith("_Object__") or name == "_safe_nesting": super().__setattr__(name, value)
@@ -139,6 +157,7 @@ class Object(Safe):
         if hasattr(self.__obj, name): delattr(self.__obj, name)
 
     def __commit__(self, force=False):
+        #print(f"commiting object {self.__obj} with nesting "+str(self._safe_nesting))
         if not force:
             self._safe_nesting -= 1
             if self._safe_nesting: return self
@@ -149,9 +168,7 @@ class Object(Safe):
 
 
 def tosafe(data, policies = (List, Dict, Object, )):
-    if isinstance(data, Safe):
-        data._safe_nesting += 1
-        return data
+    if isinstance(data, Safe): return data
     for policy in policies:
         try: return policy(data)
         except AssertionError: pass
