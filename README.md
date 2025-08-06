@@ -45,6 +45,30 @@ division-by-zero error at any point. More on error handling later.
 ![Error example](docs/error.png)
 
 
+Also consider a more complicated case where an object (for now:
+without magic methods) is set as a service argument. No modification
+occurs on failure.
+
+```python
+from cefc import service
+
+class ValueWrapper:
+    def __init__(self, value):
+        self.value = value
+    def inc(self):
+        self.value += 1
+        return self.value
+
+@service
+def incinv(a):
+    return 1.0/a.value.inc()
+
+a = ValueWrapper(ValueWrapper(-1))
+print(incinv(a))
+print(a.value.value)
+```
+
+
 ## :hammer_and_wrench: Safe types
 
 This is a list of types whose safety is (planned to be) guaranteed 
